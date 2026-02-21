@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { ScanRecord } from '@/lib/types';
 import { getDiseaseInfo } from '@/lib/disease-data';
+import { evaluateOutbreakForSharedScan } from '@/lib/outbreak-alerts';
 import { useToast } from '@/hooks/use-toast';
 
 interface Props {
@@ -46,22 +47,45 @@ export default function ShareScanDialog({ open, onOpenChange, scan, imageFile }:
       }
     }
 
-    const { error } = await supabase.from('community_posts').insert({
-      user_id: user.id,
-      predicted_label: scan.predictedLabel,
-      confidence: scan.confidence,
-      top3: scan.top3,
-      image_url: imageUrl,
-      lat: scan.lat,
-      lng: scan.lng,
-      notes: notes || null,
-    });
+    const { data: createdPost, error } = await supabase
+      .from('community_posts')
+      .insert({
+        user_id: user.id,
+        predicted_label: scan.predictedLabel,
+        confidence: scan.confidence,
+        top3: scan.top3,
+        image_url: imageUrl,
+        lat: scan.lat,
+        lng: scan.lng,
+        notes: notes || null,
+      })
+      .select('id,predicted_label,confidence,lat,lng,created_at')
+      .single();
 
     setSharing(false);
 
     if (error) {
       toast({ title: 'Failed to share', description: error.message, variant: 'destructive' });
     } else {
+      if (createdPost) {
+        const outbreakResult = await evaluateOutbreakForSharedScan({
+          postId: createdPost.id,
+          createdBy: user.id,
+          predictedLabel: createdPost.predicted_label,
+          confidence: createdPost.confidence,
+          createdAt: createdPost.created_at,
+          lat: createdPost.lat,
+          lng: createdPost.lng,
+        });
+
+        if (outbreakResult.status === 'created') {
+          toast({
+            title: 'Outbreak alert sent',
+            description: outbreakResult.alert?.summary ?? 'Nearby users were notified of a potential outbreak.',
+          });
+        }
+      }
+
       toast({ title: 'Shared!', description: 'Your scan is now visible to the community.' });
       onOpenChange(false);
     }

@@ -53,6 +53,54 @@ export type Database = {
         }
         Relationships: []
       }
+      outbreak_alerts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          disease_label: string
+          evaluated_at: string
+          id: string
+          is_outbreak: boolean
+          lat: number
+          lng: number
+          nearby_count: number
+          radius_km: number
+          severity: string | null
+          source_post_id: string | null
+          summary: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          disease_label: string
+          evaluated_at?: string
+          id?: string
+          is_outbreak?: boolean
+          lat: number
+          lng: number
+          nearby_count?: number
+          radius_km?: number
+          severity?: string | null
+          source_post_id?: string | null
+          summary: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          disease_label?: string
+          evaluated_at?: string
+          id?: string
+          is_outbreak?: boolean
+          lat?: number
+          lng?: number
+          nearby_count?: number
+          radius_km?: number
+          severity?: string | null
+          source_post_id?: string | null
+          summary?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

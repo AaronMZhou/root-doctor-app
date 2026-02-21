@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { getSettings } from "@/lib/scan-store";
 import { AuthProvider } from "@/hooks/useAuth";
+import OutbreakAlertListener from "@/components/OutbreakAlertListener";
 import Home from "./pages/Home";
 import Onboarding from "./pages/Onboarding";
 import Results from "./pages/Results";
@@ -31,6 +32,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <OutbreakAlertListener />
         <BrowserRouter>
           <Routes>
             <Route path="/onboarding" element={<Onboarding />} />
