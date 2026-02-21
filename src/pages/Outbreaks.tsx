@@ -31,14 +31,24 @@ function severityClass(severity: string | null) {
 export default function OutbreaksPage() {
   const [alerts, setAlerts] = useState<OutbreakAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const fetchAlerts = async () => {
-    const { data: alertsData } = await supabase
+    const { data: alertsData, error } = await supabase
       .from('outbreak_alerts')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100);
+
+    if (error) {
+      setErrorMessage('Outbreak alerts backend is not configured yet.');
+      setAlerts([]);
+      setLoading(false);
+      return;
+    }
+
+    setErrorMessage(null);
 
     if (!alertsData) {
       setAlerts([]);
@@ -132,6 +142,11 @@ export default function OutbreaksPage() {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : errorMessage ? (
+          <div className="rounded-2xl bg-card p-4 shadow-card">
+            <p className="text-sm font-semibold text-foreground">Alerts unavailable</p>
+            <p className="text-xs text-muted-foreground mt-1">{errorMessage}</p>
           </div>
         ) : alerts.length === 0 ? (
           <div className="text-center py-12">

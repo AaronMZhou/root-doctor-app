@@ -15,12 +15,13 @@ export default function OutbreakWidget() {
   const navigate = useNavigate();
   const [recentCount, setRecentCount] = useState(0);
   const [latest, setLatest] = useState<OutbreakAlertPreview | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSummary = async () => {
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-      const [{ count }, { data: latestData }] = await Promise.all([
+      const [{ count, error: countError }, { data: latestData, error: latestError }] = await Promise.all([
         supabase
           .from('outbreak_alerts')
           .select('id', { count: 'exact', head: true })
@@ -33,6 +34,14 @@ export default function OutbreakWidget() {
           .maybeSingle(),
       ]);
 
+      if (countError || latestError) {
+        setErrorMessage('Outbreak alerts backend is not ready yet.');
+        setRecentCount(0);
+        setLatest(null);
+        return;
+      }
+
+      setErrorMessage(null);
       setRecentCount(count ?? 0);
       setLatest(latestData ?? null);
     };
@@ -50,7 +59,9 @@ export default function OutbreakWidget() {
           <AlertTriangle className="w-4 h-4 text-destructive mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-foreground">Outbreak Warnings</p>
-            <p className="text-xs text-muted-foreground">{recentCount} alerts in the last 24 hours</p>
+            <p className="text-xs text-muted-foreground">
+              {errorMessage ?? `${recentCount} alerts in the last 24 hours`}
+            </p>
           </div>
         </div>
         <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
