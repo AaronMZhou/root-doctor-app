@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Clock, BarChart3, Settings, Leaf } from 'lucide-react';
+import { Home, Clock, BarChart3, Settings, Users } from 'lucide-react';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
+  { icon: Users, label: 'Community', path: '/community' },
   { icon: Clock, label: 'History', path: '/history' },
   { icon: BarChart3, label: 'Insights', path: '/insights' },
   { icon: Settings, label: 'Settings', path: '/settings' },

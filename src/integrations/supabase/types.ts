@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      community_posts: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          image_url: string | null
+          lat: number | null
+          lng: number | null
+          notes: string | null
+          predicted_label: string
+          top3: Json
+          user_id: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          predicted_label: string
+          top3?: Json
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          predicted_label?: string
+          top3?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

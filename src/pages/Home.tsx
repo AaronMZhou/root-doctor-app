@@ -74,7 +74,7 @@ export default function HomePage() {
       saveScan(scan);
 
       // Navigate to results with the scan data
-      navigate('/results', { state: { scan } });
+      navigate('/results', { state: { scan, imageFile: selectedFile } });
     } catch {
       clearInterval(interval);
     } finally {

@@ -1,15 +1,22 @@
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, RotateCcw, Share2, AlertTriangle, CheckCircle, Clock, MapPin } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Share2, AlertTriangle, CheckCircle, Clock, MapPin, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScanRecord } from '@/lib/types';
 import { DISEASE_DATA } from '@/lib/disease-data';
+import { useAuth } from '@/hooks/useAuth';
+import ShareScanDialog from '@/components/ShareScanDialog';
 import BottomNav from '@/components/BottomNav';
 
 export default function ResultsPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const scan = (location.state as { scan?: ScanRecord })?.scan;
+  const { user } = useAuth();
+  const state = location.state as { scan?: ScanRecord; imageFile?: File } | undefined;
+  const scan = state?.scan;
+  const imageFile = state?.imageFile as File | undefined;
+  const [shareOpen, setShareOpen] = useState(false);
 
   if (!scan) {
     navigate('/');
@@ -95,6 +102,37 @@ export default function ResultsPage() {
           </div>
         </motion.div>
 
+        {/* Share to community prompt */}
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <Button
+              size="lg"
+              className="w-full gap-2 h-12 rounded-xl bg-gradient-hero"
+              onClick={() => setShareOpen(true)}
+            >
+              <Users className="w-5 h-5" /> Share with Community
+            </Button>
+          </motion.div>
+        )}
+
+        {!user && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-xl bg-primary/5 border border-primary/20 p-3"
+          >
+            <p className="text-xs text-foreground">
+              <button onClick={() => navigate('/auth')} className="text-primary font-semibold">Sign in</button>
+              {' '}to share this scan with the community and help nearby farmers.
+            </p>
+          </motion.div>
+        )}
+
         {/* Description */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -144,6 +182,7 @@ export default function ResultsPage() {
         </div>
       </div>
 
+      <ShareScanDialog open={shareOpen} onOpenChange={setShareOpen} scan={scan} imageFile={imageFile} />
       <BottomNav />
     </div>
   );
