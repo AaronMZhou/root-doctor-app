@@ -2,11 +2,25 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { getSettings } from "@/lib/scan-store";
+import Home from "./pages/Home";
+import Onboarding from "./pages/Onboarding";
+import Results from "./pages/Results";
+import History from "./pages/History";
+import Insights from "./pages/Insights";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+function RequireOnboarding({ children }: { children: React.ReactNode }) {
+  const settings = getSettings();
+  if (!settings.onboardingComplete) {
+    return <Navigate to="/onboarding" replace />;
+  }
+  return <>{children}</>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -15,8 +29,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/" element={<RequireOnboarding><Home /></RequireOnboarding>} />
+          <Route path="/results" element={<RequireOnboarding><Results /></RequireOnboarding>} />
+          <Route path="/history" element={<RequireOnboarding><History /></RequireOnboarding>} />
+          <Route path="/insights" element={<RequireOnboarding><Insights /></RequireOnboarding>} />
+          <Route path="/settings" element={<RequireOnboarding><Settings /></RequireOnboarding>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
