@@ -9,8 +9,8 @@ import onboardingHero from '@/assets/onboarding-hero.jpg';
 const steps = [
   {
     icon: Leaf,
-    title: 'Detect Cassava Diseases',
-    description: 'Scan cassava leaves to quickly identify potential diseases and get guidance on next steps.',
+    title: 'Detect Plant Diseases',
+    description: 'Scan plant leaves to quickly identify potential diseases and get guidance on next steps.',
     image: true,
   },
   {
@@ -90,7 +90,7 @@ export default function OnboardingPage() {
         >
           {current.image && (
             <div className="relative mx-auto mt-4 mb-6 w-full max-w-xs aspect-[3/4] rounded-2xl overflow-hidden shadow-elevated">
-              <img src={onboardingHero} alt="Cassava field" className="w-full h-full object-cover" />
+              <img src={onboardingHero} alt="Crop field" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
                 <h1 className="font-display text-2xl font-bold text-primary-foreground">CropGuard</h1>

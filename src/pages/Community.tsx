@@ -3,8 +3,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Clock, Users, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { DISEASE_DATA } from '@/lib/disease-data';
-import { DiseaseClass } from '@/lib/types';
+import { getDiseaseInfo, isHealthyLabel } from '@/lib/disease-data';
 import CommunityMap, { MapIssuePoint } from '@/components/CommunityMap';
 import BottomNav from '@/components/BottomNav';
 
@@ -104,7 +103,7 @@ export default function CommunityPage() {
         id: post.id,
         lat: post.lat as number,
         lng: post.lng as number,
-        label: DISEASE_DATA[post.predicted_label as DiseaseClass]?.fullName ?? post.predicted_label,
+        label: getDiseaseInfo(post.predicted_label).fullName,
         confidence: post.confidence,
         displayName: post.profiles?.display_name || 'Anonymous',
         createdAt: post.created_at,
@@ -151,8 +150,8 @@ export default function CommunityPage() {
           </div>
         ) : (
           posts.map((post, i) => {
-            const disease = DISEASE_DATA[post.predicted_label as DiseaseClass];
-            const isHealthy = post.predicted_label === 'Healthy';
+            const disease = getDiseaseInfo(post.predicted_label);
+            const isHealthy = isHealthyLabel(post.predicted_label);
             const isOwn = post.user_id === user?.id;
             const displayName = post.profiles?.display_name || 'Anonymous';
             const hasCoordinates = post.lat !== null && post.lng !== null;

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock, MapPin, Filter, ChevronRight } from 'lucide-react';
 import { getScans } from '@/lib/scan-store';
-import { DISEASE_DATA, ALL_CLASSES } from '@/lib/disease-data';
+import { ALL_CLASSES, getDiseaseInfo, isHealthyLabel } from '@/lib/disease-data';
 import { DiseaseClass, ScanRecord } from '@/lib/types';
 import BottomNav from '@/components/BottomNav';
 
@@ -24,7 +24,6 @@ export default function HistoryPage() {
         <p className="text-sm text-muted-foreground">{scans.length} total scans</p>
       </div>
 
-      {/* Filters */}
       <div className="px-5 pb-3">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           <FilterChip label="All" active={classFilter === 'all'} onClick={() => setClassFilter('all')} />
@@ -70,8 +69,8 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
 }
 
 function ScanCard({ scan, index, onClick }: { scan: ScanRecord; index: number; onClick: () => void }) {
-  const disease = DISEASE_DATA[scan.predictedLabel];
-  const isHealthy = scan.predictedLabel === 'Healthy';
+  const disease = getDiseaseInfo(scan.predictedLabel);
+  const isHealthy = isHealthyLabel(scan.predictedLabel);
 
   return (
     <motion.button
@@ -84,7 +83,7 @@ function ScanCard({ scan, index, onClick }: { scan: ScanRecord; index: number; o
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
         isHealthy ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'
       }`}>
-        {scan.predictedLabel === 'Healthy' ? '✓' : scan.predictedLabel}
+        {isHealthy ? 'OK' : scan.predictedLabel}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-foreground truncate">{disease.fullName}</p>
@@ -93,7 +92,7 @@ function ScanCard({ scan, index, onClick }: { scan: ScanRecord; index: number; o
             <Clock className="w-3 h-3" />
             {new Date(scan.createdAt).toLocaleDateString()}
           </span>
-          {scan.lat && (
+          {scan.lat !== undefined && (
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
               {scan.lat.toFixed(1)},{scan.lng?.toFixed(1)}

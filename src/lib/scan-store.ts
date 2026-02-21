@@ -55,9 +55,21 @@ export function exportHistory(format: 'csv' | 'json'): string {
   if (format === 'json') {
     return JSON.stringify(scans, null, 2);
   }
-  const headers = 'id,createdAt,predictedLabel,confidence,lat,lng,regionText,notes';
-  const rows = scans.map(s =>
-    [s.id, s.createdAt, s.predictedLabel, s.confidence, s.lat ?? '', s.lng ?? '', s.regionText ?? '', s.notes ?? ''].join(',')
-  );
+
+  const escapeCsv = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+  const headers = ['id', 'createdAt', 'predictedLabel', 'confidence', 'lat', 'lng', 'regionText', 'notes']
+    .map(escapeCsv)
+    .join(',');
+  const rows = scans.map(s => [
+    s.id,
+    s.createdAt,
+    s.predictedLabel,
+    s.confidence,
+    s.lat ?? '',
+    s.lng ?? '',
+    s.regionText ?? '',
+    s.notes ?? '',
+  ].map(escapeCsv).join(','));
+
   return [headers, ...rows].join('\n');
 }

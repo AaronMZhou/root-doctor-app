@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, MapPin } from 'lucide-react';
 import { getScans } from '@/lib/scan-store';
-import { DISEASE_DATA, ALL_CLASSES } from '@/lib/disease-data';
+import { ALL_CLASSES, getDiseaseInfo } from '@/lib/disease-data';
 import BottomNav from '@/components/BottomNav';
 
 export default function InsightsPage() {
@@ -18,7 +18,7 @@ export default function InsightsPage() {
   const maxCount = Math.max(...Object.values(classCounts), 1);
 
   const recentWithLocation = useMemo(
-    () => scans.filter(s => s.lat && s.lng).slice(0, 10),
+    () => scans.filter(s => s.lat !== undefined && s.lng !== undefined).slice(0, 10),
     [scans]
   );
 
@@ -88,7 +88,7 @@ export default function InsightsPage() {
               {recentWithLocation.map(scan => (
                 <div key={scan.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <div>
-                    <p className="text-sm font-medium text-foreground">{DISEASE_DATA[scan.predictedLabel].fullName}</p>
+                    <p className="text-sm font-medium text-foreground">{getDiseaseInfo(scan.predictedLabel).fullName}</p>
                     <p className="text-xs text-muted-foreground">{new Date(scan.createdAt).toLocaleDateString()}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">

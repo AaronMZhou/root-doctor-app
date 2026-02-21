@@ -102,7 +102,7 @@ export default function HomePage() {
           <Leaf className="w-6 h-6 text-primary" />
           <h1 className="font-display text-xl font-bold text-foreground">CropGuard</h1>
         </div>
-        <p className="text-sm text-muted-foreground">Scan a cassava leaf to detect disease</p>
+        <p className="text-sm text-muted-foreground">Scan a plant leaf to detect disease</p>
       </div>
 
       <div className="flex-1 px-5 flex flex-col gap-5">

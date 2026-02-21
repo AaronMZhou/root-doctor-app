@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, RotateCcw, Share2, AlertTriangle, CheckCircle, Clock, MapPin, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScanRecord } from '@/lib/types';
-import { DISEASE_DATA } from '@/lib/disease-data';
+import { getDiseaseInfo, isHealthyLabel } from '@/lib/disease-data';
 import { useAuth } from '@/hooks/useAuth';
 import ShareScanDialog from '@/components/ShareScanDialog';
 import BottomNav from '@/components/BottomNav';
@@ -23,8 +23,8 @@ export default function ResultsPage() {
     return null;
   }
 
-  const disease = DISEASE_DATA[scan.predictedLabel];
-  const isHealthy = scan.predictedLabel === 'Healthy';
+  const disease = getDiseaseInfo(scan.predictedLabel);
+  const isHealthy = isHealthyLabel(scan.predictedLabel);
   const confidencePercent = Math.round(scan.confidence * 100);
 
   const handleShare = async () => {

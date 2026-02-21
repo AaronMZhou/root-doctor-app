@@ -6,6 +6,7 @@ import { Users, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { ScanRecord } from '@/lib/types';
+import { getDiseaseInfo } from '@/lib/disease-data';
 import { useToast } from '@/hooks/use-toast';
 
 interface Props {
@@ -20,6 +21,7 @@ export default function ShareScanDialog({ open, onOpenChange, scan, imageFile }:
   const [sharing, setSharing] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const disease = getDiseaseInfo(scan.predictedLabel);
 
   const handleShare = async () => {
     if (!user) {
@@ -80,7 +82,7 @@ export default function ShareScanDialog({ open, onOpenChange, scan, imageFile }:
 
         <div className="space-y-4">
           <div className="rounded-xl bg-muted/50 p-3">
-            <p className="text-sm font-medium text-foreground">{scan.predictedLabel}</p>
+            <p className="text-sm font-medium text-foreground">{disease.fullName}</p>
             <p className="text-xs text-muted-foreground">{Math.round(scan.confidence * 100)}% confidence</p>
             {scan.lat !== undefined && scan.lng !== undefined && (
               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
