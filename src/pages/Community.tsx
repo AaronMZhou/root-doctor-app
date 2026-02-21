@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Users, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { DISEASE_DATA } from '@/lib/disease-data';
 import { DiseaseClass } from '@/lib/types';
+import CommunityMap, { MapIssuePoint } from '@/components/CommunityMap';
 import BottomNav from '@/components/BottomNav';
 
 interface CommunityPost {
@@ -23,6 +24,8 @@ interface CommunityPost {
 export default function CommunityPage() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationState, setLocationState] = useState<'loading' | 'ready' | 'unavailable' | 'denied'>('loading');
   const { user } = useAuth();
 
   const fetchPosts = async () => {
@@ -63,6 +66,24 @@ export default function CommunityPage() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationState('unavailable');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+        setLocationState('ready');
+      },
+      (error) => {
+        setLocationState(error.code === error.PERMISSION_DENIED ? 'denied' : 'unavailable');
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+    );
+  }, []);
+
   const handleDelete = async (postId: string) => {
     await supabase.from('community_posts').delete().eq('id', postId);
     setPosts(prev => prev.filter(p => p.id !== postId));
@@ -76,6 +97,20 @@ export default function CommunityPage() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
+  const mapIssues = useMemo<MapIssuePoint[]>(() => {
+    return posts
+      .filter(post => post.lat !== null && post.lng !== null)
+      .map(post => ({
+        id: post.id,
+        lat: post.lat as number,
+        lng: post.lng as number,
+        label: DISEASE_DATA[post.predicted_label as DiseaseClass]?.fullName ?? post.predicted_label,
+        confidence: post.confidence,
+        displayName: post.profiles?.display_name || 'Anonymous',
+        createdAt: post.created_at,
+      }));
+  }, [posts]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background pb-20">
       <div className="px-5 pt-6 pb-4">
@@ -87,6 +122,23 @@ export default function CommunityPage() {
       </div>
 
       <div className="flex-1 px-5 space-y-3">
+        {(userLocation || mapIssues.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-card p-3 shadow-card"
+          >
+            <p className="text-xs font-semibold text-foreground mb-2">Issue map</p>
+            <CommunityMap issues={mapIssues} userLocation={userLocation} />
+            <p className="text-[10px] text-muted-foreground mt-2">
+              {locationState === 'ready' && 'Showing your location and shared issue reports.'}
+              {locationState === 'loading' && 'Getting your location for nearby context...'}
+              {locationState === 'denied' && 'Location access is off. Enable it to see your marker.'}
+              {locationState === 'unavailable' && 'Location unavailable on this device/browser.'}
+            </p>
+          </motion.div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -103,6 +155,10 @@ export default function CommunityPage() {
             const isHealthy = post.predicted_label === 'Healthy';
             const isOwn = post.user_id === user?.id;
             const displayName = post.profiles?.display_name || 'Anonymous';
+            const hasCoordinates = post.lat !== null && post.lng !== null;
+            const distanceKm = hasCoordinates && userLocation
+              ? getDistance(userLocation.lat, userLocation.lng, post.lat as number, post.lng as number)
+              : null;
 
             return (
               <motion.div
@@ -149,10 +205,11 @@ export default function CommunityPage() {
                   <p className="text-xs text-muted-foreground mt-2">{post.notes}</p>
                 )}
 
-                {post.lat && post.lng && (
-                  <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
+                {hasCoordinates && (
+                  <p className="text-[10px] text-muted-foreground mt-2 flex flex-wrap items-center gap-1.5">
                     <MapPin className="w-3 h-3" />
-                    {post.lat.toFixed(2)}, {post.lng.toFixed(2)}
+                    {(post.lat as number).toFixed(2)}, {(post.lng as number).toFixed(2)}
+                    {distanceKm !== null && <span>• {distanceKm.toFixed(1)} km away</span>}
                   </p>
                 )}
               </motion.div>

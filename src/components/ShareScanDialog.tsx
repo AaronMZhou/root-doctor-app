@@ -82,7 +82,7 @@ export default function ShareScanDialog({ open, onOpenChange, scan, imageFile }:
           <div className="rounded-xl bg-muted/50 p-3">
             <p className="text-sm font-medium text-foreground">{scan.predictedLabel}</p>
             <p className="text-xs text-muted-foreground">{Math.round(scan.confidence * 100)}% confidence</p>
-            {scan.lat && scan.lng && (
+            {scan.lat !== undefined && scan.lng !== undefined && (
               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                 <Globe className="w-3 h-3" /> Location will be shared
               </p>

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Camera, Upload, Lightbulb, Leaf, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { mockPredict } from '@/lib/mock-predict';
-import { saveScan, getSettings } from '@/lib/scan-store';
+import { saveScan, getSettings, updateSettings } from '@/lib/scan-store';
 import { ScanRecord } from '@/lib/types';
 import BottomNav from '@/components/BottomNav';
 
@@ -46,18 +46,30 @@ export default function HomePage() {
       clearInterval(interval);
       setProgress(100);
 
-      // Get location
+      // Capture location when allowed; this can also trigger the browser prompt if still in "prompt" mode.
       let lat: number | undefined;
       let lng: number | undefined;
       const settings = getSettings();
-      if (settings.locationPermission === 'granted') {
+      if (navigator.geolocation) {
         try {
           const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 8000,
+              maximumAge: 60000,
+            })
           );
           lat = pos.coords.latitude;
           lng = pos.coords.longitude;
-        } catch { /* ignore */ }
+          if (settings.locationPermission !== 'granted') {
+            updateSettings({ locationPermission: 'granted' });
+          }
+        } catch (error) {
+          const geoError = error as GeolocationPositionError;
+          if (geoError?.code === 1) {
+            updateSettings({ locationPermission: 'denied' });
+          }
+        }
       }
 
       const scan: ScanRecord = {

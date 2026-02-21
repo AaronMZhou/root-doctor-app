@@ -93,7 +93,7 @@ export default function ResultsPage() {
               <Clock className="w-3.5 h-3.5" />
               {new Date(scan.createdAt).toLocaleString()}
             </span>
-            {(scan.lat && scan.lng) && (
+            {(scan.lat !== undefined && scan.lng !== undefined) && (
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5" />
                 {scan.lat.toFixed(3)}, {scan.lng.toFixed(3)}

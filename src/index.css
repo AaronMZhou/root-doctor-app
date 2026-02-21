@@ -145,3 +145,26 @@
     box-shadow: var(--shadow-glow);
   }
 }
+
+.leaflet-container {
+  background: hsl(var(--muted));
+  font-family: var(--font-body);
+}
+
+.map-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+}
+
+.map-dot-issue {
+  background: hsl(var(--destructive));
+  border: 2px solid hsl(var(--background));
+  box-shadow: 0 0 0 2px hsl(var(--destructive) / 0.2);
+}
+
+.map-dot-user {
+  background: hsl(var(--info));
+  border: 3px solid hsl(var(--background));
+  box-shadow: 0 0 0 4px hsl(var(--info) / 0.25);
+}
