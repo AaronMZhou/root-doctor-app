@@ -82,6 +82,28 @@ export default function ShareScanDialog({ open, onOpenChange, scan, imageFile }:
           toast({
             title: 'Outbreak alert sent',
             description: outbreakResult.alert?.summary ?? 'Nearby users were notified of a potential outbreak.',
+            variant: 'destructive',
+          });
+        } else if (outbreakResult.status === 'no_outbreak') {
+          toast({
+            title: 'No outbreak alert',
+            description: outbreakResult.message ?? 'The model did not detect a significant outbreak signal.',
+          });
+        } else if (outbreakResult.status === 'duplicate') {
+          toast({
+            title: 'Alert already exists',
+            description: outbreakResult.message ?? 'A similar outbreak alert is already active nearby.',
+          });
+        } else if (outbreakResult.status === 'skipped') {
+          toast({
+            title: 'Outbreak check skipped',
+            description: outbreakResult.message ?? 'Unable to run outbreak analysis for this scan.',
+          });
+        } else if (outbreakResult.status === 'error') {
+          toast({
+            title: 'Outbreak check failed',
+            description: outbreakResult.message ?? 'Could not evaluate outbreak risk after sharing.',
+            variant: 'destructive',
           });
         }
       }

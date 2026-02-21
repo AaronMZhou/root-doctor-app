@@ -13,6 +13,7 @@ import History from "./pages/History";
 import Insights from "./pages/Insights";
 import Settings from "./pages/Settings";
 import Community from "./pages/Community";
+import Outbreaks from "./pages/Outbreaks";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/insights" element={<RequireOnboarding><Insights /></RequireOnboarding>} />
             <Route path="/settings" element={<RequireOnboarding><Settings /></RequireOnboarding>} />
             <Route path="/community" element={<RequireOnboarding><Community /></RequireOnboarding>} />
+            <Route path="/outbreaks" element={<RequireOnboarding><Outbreaks /></RequireOnboarding>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

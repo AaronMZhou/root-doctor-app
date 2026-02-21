@@ -54,7 +54,23 @@ function toNumber(value: unknown, fallback: number): number {
 
 function parseWebhookDecision(raw: unknown, fallbackLabel: string): WebhookDecision {
   const payload = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const nested = (payload.result && typeof payload.result === 'object' ? payload.result : payload) as Record<string, unknown>;
+
+  let parsedOutput: Record<string, unknown> | null = null;
+  if (typeof payload.output === 'string' && payload.output.trim()) {
+    try {
+      const outputJson = JSON.parse(payload.output);
+      if (outputJson && typeof outputJson === 'object') {
+        parsedOutput = outputJson as Record<string, unknown>;
+      }
+    } catch {
+      parsedOutput = null;
+    }
+  }
+
+  const nested = (
+    parsedOutput ??
+    (payload.result && typeof payload.result === 'object' ? payload.result : payload)
+  ) as Record<string, unknown>;
 
   const outbreak = toBoolean(
     nested.outbreak ??

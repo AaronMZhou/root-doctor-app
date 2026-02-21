@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getDiseaseInfo, isHealthyLabel } from '@/lib/disease-data';
 import CommunityMap, { MapIssuePoint } from '@/components/CommunityMap';
+import OutbreakWidget from '@/components/OutbreakWidget';
 import BottomNav from '@/components/BottomNav';
 
 interface CommunityPost {
@@ -121,6 +122,8 @@ export default function CommunityPage() {
       </div>
 
       <div className="flex-1 px-5 space-y-3">
+        <OutbreakWidget />
+
         {(userLocation || mapIssues.length > 0) && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}

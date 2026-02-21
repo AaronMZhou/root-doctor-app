@@ -3,8 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import { getDiseaseInfo } from '@/lib/disease-data';
 import { getDistanceKm } from '@/lib/geo';
-import { getSettings } from '@/lib/scan-store';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 type OutbreakAlertRow = Tables<'outbreak_alerts'>;
 
@@ -14,8 +14,7 @@ export default function OutbreakAlertListener() {
   const seenAlertIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    const settings = getSettings();
-    if (settings.locationPermission !== 'granted' || !navigator.geolocation) {
+    if (!navigator.geolocation) {
       return;
     }
 
@@ -46,6 +45,11 @@ export default function OutbreakAlertListener() {
         title: `Potential outbreak nearby: ${diseaseName}`,
         description: `${alert.summary} (${distanceText})`,
         variant: 'destructive',
+        action: (
+          <ToastAction altText="View alerts" onClick={() => { window.location.href = '/outbreaks'; }}>
+            View Alerts
+          </ToastAction>
+        ),
       });
     };
 

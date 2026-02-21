@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { mockPredict } from '@/lib/mock-predict';
 import { saveScan, getSettings, updateSettings } from '@/lib/scan-store';
 import { ScanRecord } from '@/lib/types';
+import OutbreakWidget from '@/components/OutbreakWidget';
 import BottomNav from '@/components/BottomNav';
 
 export default function HomePage() {
@@ -106,6 +107,8 @@ export default function HomePage() {
       </div>
 
       <div className="flex-1 px-5 flex flex-col gap-5">
+        <OutbreakWidget />
+
         {/* Image preview or scan button area */}
         {selectedImage ? (
           <motion.div
