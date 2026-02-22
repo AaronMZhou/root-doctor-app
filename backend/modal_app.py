@@ -63,54 +63,42 @@ CLASS_NAMES = [
 @app.cls(
     gpu="T4",
     volumes={MODEL_DIR: volume},
-    container_idle_timeout=300,
-    allow_concurrent_inputs=10,
+    scaledown_window=300,
 )
+@modal.concurrent(max_inputs=10)
 class RootDoctorModel:
 
     @modal.enter()
     def load_model(self):
         import torch
-        import torch.nn as nn
         import timm
 
         model_path = f"{MODEL_DIR}/best_model.pth"
-
-        class PlantDiseaseModel(nn.Module):
-            def __init__(self, model_name="efficientnetv2_s", num_classes=38, drop_rate=0.3):
-                super().__init__()
-                self.backbone = timm.create_model(
-                    model_name, pretrained=False, num_classes=0, drop_rate=drop_rate
-                )
-                num_features = self.backbone.num_features
-                self.classifier = nn.Sequential(
-                    nn.LayerNorm(num_features),
-                    nn.Dropout(drop_rate),
-                    nn.Linear(num_features, 512),
-                    nn.GELU(),
-                    nn.Dropout(drop_rate / 2),
-                    nn.Linear(512, num_classes),
-                )
-
-            def forward(self, x):
-                features = self.backbone(x)
-                return self.classifier(features)
-
-        self.model = PlantDiseaseModel(
-            model_name="efficientnetv2_s", num_classes=len(CLASS_NAMES)
-        )
-
         checkpoint = torch.load(model_path, map_location="cuda", weights_only=False)
-        self.model.load_state_dict(checkpoint["model_state_dict"])
+
+        model_name = checkpoint.get("model_name", "tf_efficientnetv2_s")
+        num_classes = len(checkpoint.get("class_to_idx", CLASS_NAMES))
+        img_size = checkpoint.get("img_size", 224)
+
+        self.model = timm.create_model(
+            model_name, pretrained=False, num_classes=num_classes
+        )
+        self.model.load_state_dict(checkpoint["state_dict"])
         self.model.eval()
         self.model.cuda()
 
-        # Use the class order from the checkpoint if available, otherwise fall back
-        self.class_names = checkpoint.get("class_names", CLASS_NAMES)
+        # Build class_names list ordered by index from checkpoint
+        class_to_idx = checkpoint.get("class_to_idx")
+        if class_to_idx:
+            self.class_names = [None] * len(class_to_idx)
+            for name, idx in class_to_idx.items():
+                self.class_names[idx] = name
+        else:
+            self.class_names = CLASS_NAMES
 
         from torchvision import transforms
         self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize((img_size, img_size)),
             transforms.ToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
@@ -118,9 +106,9 @@ class RootDoctorModel:
             ),
         ])
 
-        print(f"Model loaded — {len(self.class_names)} classes on GPU")
+        print(f"Model loaded — {model_name}, {len(self.class_names)} classes, {img_size}px on GPU")
 
-    @modal.web_endpoint(method="POST")
+    @modal.fastapi_endpoint(method="POST")
     async def predict(self, request: dict):
         import torch
         from PIL import Image

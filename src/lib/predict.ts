@@ -1,45 +1,61 @@
-import { PredictionResult } from './types';
+import { PredictionResult, DiseaseClass, DISEASE_CLASSES } from './types';
 import { mockPredict } from './mock-predict';
 
-const PREDICT_API_URL = import.meta.env.VITE_PREDICT_API_URL?.replace(/\/$/, '');
+const API_URL = import.meta.env.VITE_PREDICT_API_URL;
 
-function isValidPrediction(payload: unknown): payload is PredictionResult {
-  if (!payload || typeof payload !== 'object') return false;
-  const data = payload as Record<string, unknown>;
-  return (
-    typeof data.predictedLabel === 'string' &&
-    typeof data.confidence === 'number' &&
-    Array.isArray(data.top3) &&
-    typeof data.modelVersion === 'string'
-  );
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function isDiseaseClass(label: string): label is DiseaseClass {
+  return (DISEASE_CLASSES as readonly string[]).includes(label);
 }
 
 export async function predictLeaf(imageFile: File): Promise<PredictionResult> {
-  if (!PREDICT_API_URL) {
+  if (!API_URL) {
+    console.warn('VITE_PREDICT_API_URL not set — falling back to mock predictor');
     return mockPredict(imageFile);
   }
 
-  const formData = new FormData();
-  formData.append('file', imageFile);
-
   try {
-    const response = await fetch(`${PREDICT_API_URL}/predict`, {
+    const base64 = await fileToBase64(imageFile);
+
+    const response = await fetch(API_URL, {
       method: 'POST',
-      body: formData,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64 }),
     });
 
     if (!response.ok) {
-      throw new Error(`Prediction API failed (${response.status})`);
+      throw new Error(`API returned ${response.status}`);
     }
 
-    const result = await response.json();
-    if (!isValidPrediction(result)) {
-      throw new Error('Prediction API returned an invalid response shape.');
-    }
+    const data = await response.json();
 
-    return result;
-  } catch {
-    // Fallback keeps the app usable when backend is unavailable.
+    const predictedLabel = isDiseaseClass(data.prediction)
+      ? data.prediction
+      : DISEASE_CLASSES[0];
+
+    const top3 = (data.top3 ?? []).slice(0, 3).map(
+      (item: { label: string; prob: number }) => ({
+        label: isDiseaseClass(item.label) ? item.label : DISEASE_CLASSES[0],
+        prob: item.prob,
+      }),
+    );
+
+    return {
+      predictedLabel,
+      confidence: data.confidence,
+      top3,
+      modelVersion: 'modal-v1.0',
+    };
+  } catch (error) {
+    console.error('Modal API failed, falling back to mock:', error);
     return mockPredict(imageFile);
   }
 }
