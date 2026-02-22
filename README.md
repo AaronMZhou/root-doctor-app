@@ -1,86 +1,82 @@
-# Welcome to your Lovable project
+# SafeCrop
 
-## Project info
+SafeCrop is a web app for vegetable leaf disease detection, result interpretation, and community outbreak awareness.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Live App
 
-## How can I edit this code?
+- Frontend (Vercel): https://safecrop.vercel.app/
 
-There are several ways of editing your application.
+## Team
 
-**Use Lovable**
+Team name: Convolutional Comprehensible Cannoneers
+Members: Aaron Zhou, Hari Girish
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## What SafeCrop Does
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Lets users capture or upload a leaf image.
+2. Runs disease prediction through a backend inference API.
+3. Shows readable diagnosis labels, confidence, and top predictions.
+4. Stores local scan history and insights.
+5. Supports optional community sharing and map-based outbreak visibility.
 
-**Use your preferred IDE**
+## Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Frontend: React, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion
+- Mapping: Leaflet + React Leaflet
+- Auth/Data/Storage/Realtime: Supabase
+- Inference API: FastAPI + PyTorch + timm + torchvision
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Project Structure
 
-Follow these steps:
+```text
+.
+|-- src/                 # Frontend app
+|-- backend/             # FastAPI inference service + model checkpoint
+|-- supabase/            # Supabase config and SQL migrations
+|-- public/              # Static assets (favicon, etc.)
+|-- package.json         # Frontend scripts and dependencies
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Local Development
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 1) Frontend
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### 2) Backend
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+python -m venv .venv
+. .venv/Scripts/activate
+pip install -r backend/requirements.txt
+uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
+```
 
-**Use GitHub Codespaces**
+### 3) Connect frontend to backend
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Set this in `.env` (or `.env.local`):
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
-
-## Real Model Inference (best_model.pth)
-
-Frontend now supports calling a Python inference API instead of only using the mock predictor.
-
-1. Run backend API from `backend/` (see `backend/README.md`).
-2. Set frontend env var:
-
-```sh
+```bash
 VITE_PREDICT_API_URL=http://localhost:8000
 ```
 
-If `VITE_PREDICT_API_URL` is missing or backend is down, app falls back to `mockPredict`.
+If `VITE_PREDICT_API_URL` is missing or unreachable, the frontend falls back to mock prediction logic.
+
+## Deployment Notes
+
+1. Deploy frontend to Vercel.
+2. Deploy backend API separately (for example Render/Modal/Fly/Railway).
+3. In Vercel environment variables, set:
+
+```bash
+VITE_PREDICT_API_URL=https://your-backend-url
+```
+
+## Model Inference
+
+- Model checkpoint path in repo: `backend/models/best_model.pth`
+- Backend entrypoint: `backend/app.py`
+- Endpoints: `GET /health`, `POST /predict`
