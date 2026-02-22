@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SafeCrop leaf icon">
+  <defs>
+    <linearGradient id="leaf-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2f8f5b" />
+      <stop offset="100%" stop-color="#1f6f46" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#leaf-bg)" />
+  <path
+    d="M47 17c-12 1-20 8-24 19-1 2 0 4 2 5 9 3 19 0 25-8 4-6 5-13 3-16-1 0-3 0-6 0z"
+    fill="#f2f7ec"
+  />
+  <path
+    d="M18 46c11-1 20-7 26-17"
+    fill="none"
+    stroke="#dcefd6"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
+</svg>
