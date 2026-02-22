@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock, MapPin, Filter, ChevronRight } from 'lucide-react';
+import { Clock, MapPin, Filter, ChevronRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { getScans } from '@/lib/scan-store';
 import { ALL_CLASSES, getDiseaseInfo, isHealthyLabel } from '@/lib/disease-data';
 import { DiseaseClass, ScanRecord } from '@/lib/types';
@@ -28,7 +28,12 @@ export default function HistoryPage() {
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           <FilterChip label="All" active={classFilter === 'all'} onClick={() => setClassFilter('all')} />
           {ALL_CLASSES.map(c => (
-            <FilterChip key={c} label={c} active={classFilter === c} onClick={() => setClassFilter(c)} />
+            <FilterChip
+              key={c}
+              label={getDiseaseInfo(c).fullName}
+              active={classFilter === c}
+              onClick={() => setClassFilter(c)}
+            />
           ))}
         </div>
       </div>
@@ -57,13 +62,14 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors max-w-[14rem] ${
         active
           ? 'bg-primary text-primary-foreground'
           : 'bg-card text-muted-foreground hover:bg-muted'
       }`}
+      title={label}
     >
-      {label}
+      <span className="block truncate">{label}</span>
     </button>
   );
 }
@@ -83,7 +89,7 @@ function ScanCard({ scan, index, onClick }: { scan: ScanRecord; index: number; o
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
         isHealthy ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'
       }`}>
-        {isHealthy ? 'OK' : scan.predictedLabel}
+        {isHealthy ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-foreground truncate">{disease.fullName}</p>

@@ -64,27 +64,39 @@ export default function ResultsPage() {
               )}
             </div>
             <div>
-              <h2 className="font-display text-xl font-bold text-foreground">{disease.fullName}</h2>
+              <h2 className="font-display text-xl font-bold text-foreground leading-tight break-words">{disease.fullName}</h2>
               <p className="text-sm text-muted-foreground">{confidencePercent}% confidence</p>
             </div>
           </div>
 
           {/* Top-3 probabilities */}
           <div className="space-y-2 mb-4">
-            {scan.top3.map((item) => (
-              <div key={item.label} className="flex items-center gap-3">
-                <span className="text-xs font-medium text-muted-foreground w-12 shrink-0">{item.label}</span>
-                <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+            {scan.top3.map((item) => {
+              const topLabel = getDiseaseInfo(item.label).fullName;
+              return (
+                <div key={item.label} className="space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className="text-xs font-medium text-muted-foreground min-w-0 truncate"
+                      title={topLabel}
+                    >
+                      {topLabel}
+                    </span>
+                    <span className="text-xs font-medium text-foreground shrink-0">
+                      {Math.round(item.prob * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
                   <motion.div
                     className="h-full rounded-full bg-primary"
                     initial={{ width: 0 }}
                     animate={{ width: `${item.prob * 100}%` }}
                     transition={{ delay: 0.3, duration: 0.6 }}
                   />
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-foreground w-10 text-right">{Math.round(item.prob * 100)}%</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Metadata */}
