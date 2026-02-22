@@ -10,7 +10,6 @@ from PIL import Image
 from torchvision import transforms
 
 
-CHECKPOINT_PATH = os.getenv("MODEL_CHECKPOINT_PATH", "backend/models/best_model.pth")
 DEVICE = torch.device("cpu")
 
 app = FastAPI(title="CropGuard Inference API", version="1.0.0")
@@ -24,9 +23,44 @@ app.add_middleware(
 )
 
 
+def _resolve_checkpoint_path() -> str:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    requested = os.getenv("MODEL_CHECKPOINT_PATH")
+
+    candidates = [
+        requested,
+        os.path.join(base_dir, "models", "best_model.pth"),
+        os.path.join(os.getcwd(), "models", "best_model.pth"),
+        os.path.join(os.getcwd(), "backend", "models", "best_model.pth"),
+    ]
+
+    # Check absolute path candidates first, then try cwd-relative expansions.
+    resolved_candidates: List[str] = []
+    for candidate in candidates:
+        if not candidate:
+            continue
+        if os.path.isabs(candidate):
+            resolved_candidates.append(candidate)
+        else:
+            resolved_candidates.append(candidate)
+            resolved_candidates.append(os.path.join(os.getcwd(), candidate))
+
+    seen = set()
+    for candidate in resolved_candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        if os.path.exists(candidate):
+            return candidate
+
+    debug_paths = ", ".join(seen)
+    raise FileNotFoundError(f"Checkpoint not found. Checked: {debug_paths}")
+
+
+CHECKPOINT_PATH = _resolve_checkpoint_path()
+
+
 def _load_checkpoint() -> Dict:
-    if not os.path.exists(CHECKPOINT_PATH):
-        raise FileNotFoundError(f"Checkpoint not found: {CHECKPOINT_PATH}")
     checkpoint = torch.load(CHECKPOINT_PATH, map_location=DEVICE)
     if not isinstance(checkpoint, dict):
         raise ValueError("Checkpoint format is invalid (expected dict).")
