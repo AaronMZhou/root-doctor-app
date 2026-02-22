@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Camera, Upload, Lightbulb, Leaf, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { mockPredict } from '@/lib/mock-predict';
+import { predictLeaf } from '@/lib/predict';
 import { saveScan, getSettings, updateSettings } from '@/lib/scan-store';
 import { ScanRecord } from '@/lib/types';
 import OutbreakWidget from '@/components/OutbreakWidget';
@@ -43,7 +43,7 @@ export default function HomePage() {
     }, 300);
 
     try {
-      const result = await mockPredict(selectedFile);
+      const result = await predictLeaf(selectedFile);
       clearInterval(interval);
       setProgress(100);
 

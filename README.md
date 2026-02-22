@@ -71,3 +71,16 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Real Model Inference (best_model.pth)
+
+Frontend now supports calling a Python inference API instead of only using the mock predictor.
+
+1. Run backend API from `backend/` (see `backend/README.md`).
+2. Set frontend env var:
+
+```sh
+VITE_PREDICT_API_URL=http://localhost:8000
+```
+
+If `VITE_PREDICT_API_URL` is missing or backend is down, app falls back to `mockPredict`.
