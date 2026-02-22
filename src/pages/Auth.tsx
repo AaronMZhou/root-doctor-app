@@ -50,7 +50,7 @@ export default function AuthPage() {
           <div className="w-14 h-14 rounded-full bg-gradient-hero flex items-center justify-center">
             <Leaf className="w-7 h-7 text-primary-foreground" />
           </div>
-          <h1 className="font-display text-2xl font-bold text-foreground">CropGuard</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">SafeCrop</h1>
           <p className="text-sm text-muted-foreground">
             {isSignUp ? 'Create an account to share scans' : 'Sign in to your account'}
           </p>
@@ -114,3 +114,4 @@ export default function AuthPage() {
     </div>
   );
 }
+

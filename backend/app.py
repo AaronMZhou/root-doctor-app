@@ -12,7 +12,7 @@ from torchvision import transforms
 
 DEVICE = torch.device("cpu")
 
-app = FastAPI(title="CropGuard Inference API", version="1.0.0")
+app = FastAPI(title="SafeCrop Inference API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -133,3 +133,4 @@ async def predict(file: UploadFile = File(...)):
         "top3": top3,
         "modelVersion": f"{model_name}-best_model.pth",
     }
+

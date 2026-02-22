@@ -1,7 +1,7 @@
 import { ScanRecord } from './types';
 
-const STORAGE_KEY = 'cropguard_scans';
-const SETTINGS_KEY = 'cropguard_settings';
+const STORAGE_KEY = 'safecrop_scans';
+const SETTINGS_KEY = 'safecrop_settings';
 
 export interface AppSettings {
   storePhotos: boolean;
@@ -73,3 +73,4 @@ export function exportHistory(format: 'csv' | 'json'): string {
 
   return [headers, ...rows].join('\n');
 }
+

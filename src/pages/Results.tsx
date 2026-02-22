@@ -28,10 +28,10 @@ export default function ResultsPage() {
   const confidencePercent = Math.round(scan.confidence * 100);
 
   const handleShare = async () => {
-    const text = `CropGuard Scan Result: ${disease.fullName} (${confidencePercent}% confidence) - ${new Date(scan.createdAt).toLocaleDateString()}`;
+    const text = `SafeCrop Scan Result: ${disease.fullName} (${confidencePercent}% confidence) - ${new Date(scan.createdAt).toLocaleDateString()}`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'CropGuard Result', text });
+        await navigator.share({ title: 'SafeCrop Result', text });
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(text);
@@ -199,3 +199,4 @@ export default function ResultsPage() {
     </div>
   );
 }
+

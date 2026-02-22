@@ -16,7 +16,7 @@ const steps = [
   {
     icon: Camera,
     title: 'Camera Access',
-    description: 'CropGuard needs camera access to capture leaf photos for analysis. You can also upload from your gallery.',
+    description: 'SafeCrop needs camera access to capture leaf photos for analysis. You can also upload from your gallery.',
     permission: 'camera' as const,
   },
   {
@@ -28,7 +28,7 @@ const steps = [
   {
     icon: Shield,
     title: 'Important Note',
-    description: 'CropGuard is a prototype decision-support tool. Always confirm results with a qualified agronomist or local extension service.',
+    description: 'SafeCrop is a prototype decision-support tool. Always confirm results with a qualified agronomist or local extension service.',
     final: true,
   },
 ];
@@ -93,7 +93,7 @@ export default function OnboardingPage() {
               <img src={onboardingHero} alt="Crop field" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
-                <h1 className="font-display text-2xl font-bold text-primary-foreground">CropGuard</h1>
+                <h1 className="font-display text-2xl font-bold text-primary-foreground">SafeCrop</h1>
               </div>
             </div>
           )}
@@ -143,3 +143,4 @@ export default function OnboardingPage() {
     </div>
   );
 }
+

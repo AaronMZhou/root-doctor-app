@@ -22,7 +22,7 @@ export default function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `cropguard-history.${format}`;
+    a.download = `safecrop-history.${format}`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`History exported as ${format.toUpperCase()}`);
@@ -132,7 +132,7 @@ export default function SettingsPage() {
         )}
 
         <div className="text-center text-xs text-muted-foreground py-4">
-          CropGuard Prototype v1.0
+          SafeCrop Prototype v1.0
         </div>
       </div>
 
@@ -140,3 +140,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
