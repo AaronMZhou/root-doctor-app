@@ -8,6 +8,7 @@ import { saveScan, getSettings, updateSettings } from '@/lib/scan-store';
 import { ScanRecord } from '@/lib/types';
 import OutbreakWidget from '@/components/OutbreakWidget';
 import BottomNav from '@/components/BottomNav';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function HomePage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -17,6 +18,7 @@ export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,11 +101,24 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col bg-background pb-20">
       {/* Header */}
       <div className="px-5 pt-6 pb-4">
-        <div className="flex items-center gap-2 mb-1">
-          <Leaf className="w-6 h-6 text-primary" />
-          <h1 className="font-display text-xl font-bold text-foreground">SafeCrop</h1>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Leaf className="w-6 h-6 text-primary" />
+              <h1 className="font-display text-xl font-bold text-foreground">SafeCrop</h1>
+            </div>
+            <p className="text-sm text-muted-foreground">Scan a plant leaf to detect disease</p>
+          </div>
+          {!user ? (
+            <Button size="sm" className="h-9 rounded-lg bg-gradient-hero shrink-0" onClick={() => navigate('/auth')}>
+              Sign In
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="h-9 rounded-lg shrink-0" onClick={() => navigate('/settings')}>
+              Account
+            </Button>
+          )}
         </div>
-        <p className="text-sm text-muted-foreground">Scan a plant leaf to detect disease</p>
       </div>
 
       <div className="flex-1 px-5 flex flex-col gap-5">
