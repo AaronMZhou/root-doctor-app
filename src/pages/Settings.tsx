@@ -1,15 +1,20 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, Download, Trash2, Camera, MapPin, Image, Shield, ChevronRight } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Trash2, Camera, MapPin, Shield, ChevronRight, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { getSettings, updateSettings, clearScans, exportHistory, getScans } from '@/lib/scan-store';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import BottomNav from '@/components/BottomNav';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState(getSettings);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const toggleStorePhotos = (checked: boolean) => {
     updateSettings({ storePhotos: checked });
@@ -35,6 +40,18 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      setSigningOut(true);
+      await signOut();
+      toast.success('Signed out');
+    } catch {
+      toast.error('Failed to sign out');
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background pb-20">
       <div className="px-5 pt-6 pb-4">
@@ -43,6 +60,33 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex-1 px-5 space-y-4">
+        {/* Account */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-card p-4 shadow-card">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <User className="w-4 h-4 text-primary" /> Account
+          </h3>
+
+          {user ? (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">Signed in</p>
+                <p className="text-xs text-muted-foreground break-all">{user.email}</p>
+              </div>
+              <Button variant="outline" className="w-full gap-2" onClick={handleSignOut} disabled={signingOut}>
+                <LogOut className="w-4 h-4" />
+                {signingOut ? 'Signing Out...' : 'Sign Out'}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Sign in to share scans and participate in community alerts.</p>
+              <Button className="w-full bg-gradient-hero" onClick={() => navigate('/auth')}>
+                Sign In / Create Account
+              </Button>
+            </div>
+          )}
+        </motion.div>
+
         {/* Privacy */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-card p-4 shadow-card">
           <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
