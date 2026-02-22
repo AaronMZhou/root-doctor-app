@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, ChevronRight, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getDiseaseInfo } from '@/lib/disease-data';
+import { postToOutbreakAlert } from '@/lib/outbreak-note';
 
 interface OutbreakAlertPreview {
   id: string;
@@ -21,32 +22,54 @@ export default function OutbreakWidget() {
     const fetchSummary = async () => {
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-      const [{ count, error: countError }, { data: latestData, error: latestError }] = await Promise.all([
+      const [{ data: recentRows, error: recentError }, { data: latestRows, error: latestError }] = await Promise.all([
         supabase
-          .from('outbreak_alerts')
-          .select('id', { count: 'exact', head: true })
+          .from('community_posts')
+          .select('id,created_at,predicted_label,notes,lat,lng,user_id')
           .gte('created_at', since),
         supabase
-          .from('outbreak_alerts')
-          .select('id,disease_label,summary,created_at')
+          .from('community_posts')
+          .select('id,created_at,predicted_label,notes,lat,lng,user_id')
           .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
+          .limit(50),
       ]);
 
-      if (countError || latestError) {
+      if (recentError || latestError) {
         setErrorMessage('Outbreak alerts backend is not ready yet.');
         setRecentCount(0);
         setLatest(null);
         return;
       }
 
+      const recentAlerts = (recentRows ?? []).map(postToOutbreakAlert).filter(Boolean);
+      const latestAlert = (latestRows ?? []).map(postToOutbreakAlert).find(Boolean);
+
       setErrorMessage(null);
-      setRecentCount(count ?? 0);
-      setLatest(latestData ?? null);
+      setRecentCount(recentAlerts.length);
+      if (latestAlert) {
+        setLatest({
+          id: latestAlert.id,
+          disease_label: latestAlert.diseaseLabel,
+          summary: latestAlert.summary,
+          created_at: latestAlert.createdAt,
+        });
+      } else {
+        setLatest(null);
+      }
     };
 
     fetchSummary();
+
+    const channel = supabase
+      .channel('outbreak-widget')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => {
+        fetchSummary();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (

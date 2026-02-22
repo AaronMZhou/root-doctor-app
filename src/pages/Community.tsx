@@ -7,6 +7,7 @@ import { getDiseaseInfo, isHealthyLabel } from '@/lib/disease-data';
 import CommunityMap, { MapIssuePoint } from '@/components/CommunityMap';
 import OutbreakWidget from '@/components/OutbreakWidget';
 import BottomNav from '@/components/BottomNav';
+import { parseOutbreakNote } from '@/lib/outbreak-note';
 
 interface CommunityPost {
   id: string;
@@ -37,8 +38,10 @@ export default function CommunityPage() {
 
     if (!postsData) { setPosts([]); setLoading(false); return; }
 
+    const normalPosts = postsData.filter(p => !parseOutbreakNote(p.notes));
+
     // Fetch profiles for the user_ids
-    const userIds = [...new Set(postsData.map(p => p.user_id))];
+    const userIds = [...new Set(normalPosts.map(p => p.user_id))];
     const { data: profilesData } = await supabase
       .from('profiles')
       .select('user_id, display_name')
@@ -46,7 +49,7 @@ export default function CommunityPage() {
 
     const profileMap = new Map(profilesData?.map(p => [p.user_id, p.display_name]) ?? []);
 
-    setPosts(postsData.map(p => ({
+    setPosts(normalPosts.map(p => ({
       ...p,
       profiles: { display_name: profileMap.get(p.user_id) ?? null },
     })) as CommunityPost[]);

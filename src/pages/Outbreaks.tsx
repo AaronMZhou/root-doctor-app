@@ -6,6 +6,7 @@ import { getDiseaseInfo } from '@/lib/disease-data';
 import { getDistanceKm } from '@/lib/geo';
 import OutbreakMap, { OutbreakMapPoint } from '@/components/OutbreakMap';
 import BottomNav from '@/components/BottomNav';
+import { postToOutbreakAlert } from '@/lib/outbreak-note';
 
 interface OutbreakAlert {
   id: string;
@@ -17,7 +18,7 @@ interface OutbreakAlert {
   radius_km: number;
   nearby_count: number;
   created_at: string;
-  created_by: string | null;
+  created_by: string;
   profiles?: { display_name: string | null } | null;
 }
 
@@ -35,11 +36,11 @@ export default function OutbreaksPage() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const fetchAlerts = async () => {
-    const { data: alertsData, error } = await supabase
-      .from('outbreak_alerts')
-      .select('*')
+    const { data: rows, error } = await supabase
+      .from('community_posts')
+      .select('id,user_id,predicted_label,lat,lng,notes,created_at')
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(300);
 
     if (error) {
       setErrorMessage('Outbreak alerts backend is not configured yet.');
@@ -50,13 +51,29 @@ export default function OutbreaksPage() {
 
     setErrorMessage(null);
 
-    if (!alertsData) {
+    if (!rows) {
       setAlerts([]);
       setLoading(false);
       return;
     }
 
-    const creatorIds = [...new Set(alertsData.map(a => a.created_by).filter(Boolean))] as string[];
+    const parsedAlerts = rows
+      .map(postToOutbreakAlert)
+      .filter(Boolean)
+      .map(alert => ({
+        id: alert.id,
+        disease_label: alert.diseaseLabel,
+        summary: alert.summary,
+        severity: alert.severity,
+        lat: alert.lat,
+        lng: alert.lng,
+        radius_km: alert.radiusKm,
+        nearby_count: alert.nearbyCount,
+        created_at: alert.createdAt,
+        created_by: alert.userId,
+      })) as OutbreakAlert[];
+
+    const creatorIds = [...new Set(parsedAlerts.map(a => a.created_by).filter(Boolean))] as string[];
     const { data: profilesData } = creatorIds.length === 0
       ? { data: [] }
       : await supabase
@@ -65,7 +82,7 @@ export default function OutbreaksPage() {
         .in('user_id', creatorIds);
 
     const profileMap = new Map(profilesData?.map(p => [p.user_id, p.display_name]) ?? []);
-    const withProfiles = alertsData.map(a => ({
+    const withProfiles = parsedAlerts.map(a => ({
       ...a,
       profiles: { display_name: a.created_by ? (profileMap.get(a.created_by) ?? null) : null },
     })) as OutbreakAlert[];
@@ -79,7 +96,7 @@ export default function OutbreaksPage() {
 
     const channel = supabase
       .channel('outbreak-history')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'outbreak_alerts' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => {
         fetchAlerts();
       })
       .subscribe();

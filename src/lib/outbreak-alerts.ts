@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import { getBoundingBox, getDistanceKm } from '@/lib/geo';
+import { postToOutbreakAlert, serializeOutbreakNote, parseOutbreakNote, OutbreakAlertLike } from '@/lib/outbreak-note';
 
 const DEFAULT_WEBHOOK_URL = 'https://zhoumaaron.app.n8n.cloud/webhook/37f6ef04-f709-4a22-ae5e-217e38ab40b6';
 const OUTBREAK_WEBHOOK_URL = import.meta.env.VITE_N8N_OUTBREAK_WEBHOOK_URL || DEFAULT_WEBHOOK_URL;
@@ -11,7 +12,6 @@ const DEFAULT_LOOKBACK_HOURS = 72;
 const DEDUPE_WINDOW_HOURS = 6;
 
 type CommunityPostRow = Tables<'community_posts'>;
-type OutbreakAlertRow = Tables<'outbreak_alerts'>;
 
 interface EvaluateOutbreakInput {
   postId: string;
@@ -33,7 +33,7 @@ interface WebhookDecision {
 
 export interface EvaluateOutbreakResult {
   status: 'created' | 'no_outbreak' | 'duplicate' | 'skipped' | 'error';
-  alert?: OutbreakAlertRow;
+  alert?: OutbreakAlertLike;
   message?: string;
 }
 
@@ -102,7 +102,7 @@ async function fetchNearbyRecentScans(center: { lat: number; lng: number }, radi
 
   const { data, error } = await supabase
     .from('community_posts')
-    .select('id,predicted_label,confidence,created_at,lat,lng,user_id')
+    .select('id,predicted_label,confidence,created_at,lat,lng,user_id,notes')
     .gte('created_at', since)
     .not('lat', 'is', null)
     .not('lng', 'is', null)
@@ -117,6 +117,7 @@ async function fetchNearbyRecentScans(center: { lat: number; lng: number }, radi
 
   return (data ?? []).filter((item) => {
     if (item.lat === null || item.lng === null) return false;
+    if (parseOutbreakNote(item.notes)) return false;
     return getDistanceKm(center, { lat: item.lat, lng: item.lng }) <= radiusKm;
   });
 }
@@ -126,9 +127,9 @@ async function hasRecentDuplicateAlert(center: { lat: number; lng: number }, rad
   const box = getBoundingBox(center, radiusKm);
 
   const { data, error } = await supabase
-    .from('outbreak_alerts')
-    .select('id,lat,lng,radius_km')
-    .eq('disease_label', diseaseLabel)
+    .from('community_posts')
+    .select('id,predicted_label,lat,lng,notes')
+    .eq('predicted_label', diseaseLabel)
     .gte('created_at', since)
     .gte('lat', box.minLat)
     .lte('lat', box.maxLat)
@@ -138,9 +139,12 @@ async function hasRecentDuplicateAlert(center: { lat: number; lng: number }, rad
 
   if (error) throw error;
 
-  return (data ?? []).some((alert) => {
-    const distance = getDistanceKm(center, { lat: alert.lat, lng: alert.lng });
-    return distance <= Math.min(alert.radius_km, radiusKm);
+  return (data ?? []).some((post) => {
+    if (post.lat === null || post.lng === null) return false;
+    const note = parseOutbreakNote(post.notes);
+    if (!note) return false;
+    const distance = getDistanceKm(center, { lat: post.lat, lng: post.lng });
+    return distance <= Math.min(note.radiusKm, radiusKm);
   });
 }
 
@@ -222,20 +226,25 @@ export async function evaluateOutbreakForSharedScan(input: EvaluateOutbreakInput
       return { status: 'duplicate', message: 'Similar outbreak alert already exists nearby.' };
     }
 
+    const note = serializeOutbreakNote({
+      summary: decision.summary,
+      severity: decision.severity,
+      radiusKm: decision.radiusKm,
+      nearbyCount: nearbyScans.length,
+      sourcePostId: input.postId,
+      evaluatedAt: new Date().toISOString(),
+    });
+
     const { data, error } = await supabase
-      .from('outbreak_alerts')
+      .from('community_posts')
       .insert({
-        source_post_id: input.postId,
-        created_by: input.createdBy,
-        disease_label: decision.diseaseLabel,
-        summary: decision.summary,
-        is_outbreak: true,
-        severity: decision.severity,
+        user_id: input.createdBy,
+        predicted_label: decision.diseaseLabel,
+        confidence: input.confidence,
+        top3: [],
         lat: input.lat,
         lng: input.lng,
-        radius_km: decision.radiusKm,
-        nearby_count: nearbyScans.length,
-        evaluated_at: new Date().toISOString(),
+        notes: note,
       })
       .select('*')
       .single();
@@ -244,7 +253,12 @@ export async function evaluateOutbreakForSharedScan(input: EvaluateOutbreakInput
       throw error;
     }
 
-    return { status: 'created', alert: data };
+    const alert = postToOutbreakAlert(data);
+    if (!alert) {
+      return { status: 'error', message: 'Created alert row but failed to parse alert payload.' };
+    }
+
+    return { status: 'created', alert };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to evaluate outbreak risk.';
     return { status: 'error', message };

@@ -5,8 +5,9 @@ import { getDiseaseInfo } from '@/lib/disease-data';
 import { getDistanceKm } from '@/lib/geo';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
+import { postToOutbreakAlert } from '@/lib/outbreak-note';
 
-type OutbreakAlertRow = Tables<'outbreak_alerts'>;
+type CommunityPostRow = Tables<'community_posts'>;
 
 export default function OutbreakAlertListener() {
   const { toast } = useToast();
@@ -32,14 +33,17 @@ export default function OutbreakAlertListener() {
   useEffect(() => {
     if (!userLocation) return;
 
-    const maybeNotify = (alert: OutbreakAlertRow) => {
+    const maybeNotify = (post: CommunityPostRow) => {
+      const alert = postToOutbreakAlert(post);
+      if (!alert) return;
+
       if (seenAlertIds.current.has(alert.id)) return;
       seenAlertIds.current.add(alert.id);
 
       const distance = getDistanceKm(userLocation, { lat: alert.lat, lng: alert.lng });
-      if (distance > alert.radius_km) return;
+      if (distance > alert.radiusKm) return;
 
-      const diseaseName = getDiseaseInfo(alert.disease_label).fullName;
+      const diseaseName = getDiseaseInfo(alert.diseaseLabel).fullName;
       const distanceText = `${distance.toFixed(1)} km away`;
       toast({
         title: `Potential outbreak nearby: ${diseaseName}`,
@@ -55,8 +59,8 @@ export default function OutbreakAlertListener() {
 
     const channel = supabase
       .channel('outbreak-alerts')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'outbreak_alerts' }, (payload) => {
-        maybeNotify(payload.new as OutbreakAlertRow);
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_posts' }, (payload) => {
+        maybeNotify(payload.new as CommunityPostRow);
       })
       .subscribe();
 
